@@ -1,0 +1,21 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / editor settings
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Never commit credentials or collected participant data
+.env
+*.token
+secrets*
+data/
+*.participants.json

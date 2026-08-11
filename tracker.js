@@ -15,6 +15,42 @@
    参与者编号：从链接参数读取，例如
      index.html?pid=T12345
    腾讯问卷跳转外链时把答卷编号带上即可。
+
+   ------------------------------------------------------------
+   完成码 = 数据本身（无后端方案）
+
+   本站没有后端，CONFIG.ENDPOINT 为 null，所以 localStorage 里
+   的完整事件流是回收不了的。为此完成码不再是单向哈希，而是把
+   关键指标编码进码里：被试把码填回问卷，数据就随之回到你手上。
+
+     TTE-N-7K2MQF
+      │  │    └── 6 位 base32：25 位数据 + 5 位校验
+      │  └─────── 组别：N=叙事（实验组），C=对照组
+      └────────── 前缀
+
+   25 位数据的排布（高位在前）：
+     bit 24..18  有效阅读分钟数        0–127
+     bit 17..13  看过的分节数          0–31
+     bit 12..8   最大滚动深度 / 4      0–25（即 0–100%）
+     bit  7..5   CVD 类型              0=无 1=protan 2=deutan
+                                       3=tritan 4=achro 7=未知
+     bit  4..0   标志位                bit4 打开过配色工具
+                                       bit3 导出过报告
+                                       bit2 分析过图片
+                                       bit1 系统开了减少动效
+                                       bit0 预留
+
+   实验站在运行时用 TTE.set() 上报自己的状态，例如：
+     TTE.set('cvdType', 2);        // 分配到第二色盲
+     TTE.set('ctoolOpened', true);
+   对照组不调用这些，对应位保持 0。两组的计时与编码逻辑完全一致。
+
+   解码脚本见 tools/decode_codes.py。
+   ------------------------------------------------------------
+
+   注意：这是纯前端方案，懂技术的人打开控制台即可伪造。它是
+   依从性信号，不是防作弊机制——请与问卷里的注意力检查题合并
+   判断，不要单独作为剔除依据。
    ============================================================ */
 
 (function () {
@@ -24,7 +60,9 @@
 
   var CONFIG = {
     // 解锁完成码所需的"有效阅读时长"（秒）。两组必须相同。
-    MIN_ACTIVE_SECONDS: 360,
+    // 对照组正文约 7,500 中文字，精读需 19–25 分钟；实验组约 12–15 分钟。
+    // 360 秒（6 分钟）对两者都过低，等于闸门形同虚设，故上调至 480。
+    MIN_ACTIVE_SECONDS: 480,
 
     // 连续无操作超过这个秒数即暂停计时（防止挂机刷时长）
     IDLE_TIMEOUT_SECONDS: 60,
@@ -41,16 +79,6 @@
   function qs(name) {
     var m = new RegExp('[?&]' + name + '=([^&#]*)').exec(window.location.search);
     return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : '';
-  }
-
-  function hash32(str) {
-    // FNV-1a，仅用于生成不可直接反推的短码，不作安全用途
-    var h = 0x811c9dc5, i;
-    for (i = 0; i < str.length; i++) {
-      h ^= str.charCodeAt(i);
-      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
-    }
-    return h >>> 0;
   }
 
   function pad(n, w) {
@@ -83,6 +111,32 @@
   var seenSections = {};
   var maxScrollPct = 0;
 
+  var reducedMotion = !!(window.matchMedia &&
+    matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  /* 由页面在运行时上报的状态。对照组不设置任何一项，全部保持默认，
+     因此两组走的是同一套编码逻辑，只是对照组的这些位恒为 0。 */
+  var reported = {
+    cvdType: null,        // null → 编码为 7（未知/不适用）
+    ctoolOpened: false,
+    ctoolExported: false,
+    imgAnalysed: false
+  };
+
+  var CVD_TYPES = { none: 0, protan: 1, deutan: 2, tritan: 3, achro: 4 };
+
+  function report(key, value) {
+    if (!(key in reported)) return;
+    if (key === 'cvdType') {
+      reported.cvdType = (typeof value === 'string')
+        ? (CVD_TYPES.hasOwnProperty(value) ? CVD_TYPES[value] : null)
+        : (typeof value === 'number' ? value : null);
+    } else {
+      reported[key] = !!value;
+    }
+    log('report', { key: key, value: reported[key] });
+  }
+
   function activeSeconds() {
     return Math.floor(activeMs / 1000);
   }
@@ -113,6 +167,8 @@
       wallSeconds: Math.floor((Date.now() - startedAt) / 1000),
       maxScrollPct: maxScrollPct,
       sectionsSeen: Object.keys(seenSections),
+      reported: reported,
+      reducedMotion: reducedMotion,
       unlocked: unlocked,
       code: issuedCode,
       events: events
@@ -200,11 +256,7 @@
   if (window.IntersectionObserver) {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
-        if (!en.isIntersecting) return;
-        var id = en.target.id;
-        if (!id || seenSections[id]) return;
-        seenSections[id] = activeSeconds();
-        log('section_view', id);
+        if (en.isIntersecting) markSeen(en.target.id);
       });
     }, { threshold: 0.35 });
 
@@ -214,15 +266,58 @@
 
   /* ---------- 完成码 ---------- */
 
+  /* base32，剔除 I L O U 以免手抄时与 1 0 混淆 */
+  var ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
   function makeCode() {
-    var mins = Math.min(999, Math.floor(activeSeconds() / 60));
+    var mins     = Math.min(127, Math.floor(activeSeconds() / 60));
+    var sections = Math.min(31, Object.keys(seenSections).length);
+    var scroll   = Math.min(25, Math.round(maxScrollPct / 4));
+    var type     = (reported.cvdType === null) ? 7 : (reported.cvdType & 7);
+
+    var flags = (reported.ctoolOpened   ? 1 : 0) << 4 |
+                (reported.ctoolExported ? 1 : 0) << 3 |
+                (reported.imgAnalysed   ? 1 : 0) << 2 |
+                (reducedMotion          ? 1 : 0) << 1;
+
+    /* 25 位载荷。JS 位运算是 32 位有符号的，25+5 位仍在安全范围内。 */
+    var v = (mins << 18) | (sections << 13) | (scroll << 8) | (type << 5) | flags;
+
+    var check = 0, i;
+    for (i = 0; i < 25; i += 5) check ^= (v >>> i) & 31;
+
+    var full = ((v << 5) | check) >>> 0;   // 30 位
+    var body = '';
+    for (i = 25; i >= 0; i -= 5) body += ALPHABET[(full >>> i) & 31];
+
     var armTag = ARM === 'narrative' ? 'N' : (ARM === 'control' ? 'C' : 'X');
-    var seed = ARM + '|' + PID + '|' + SESSION + '|' + mins;
-    var body = hash32(seed).toString(36).toUpperCase();
-    while (body.length < 6) body = '0' + body;
-    body = body.slice(0, 6);
-    var check = hash32(body + armTag) % 97;
-    return CONFIG.CODE_PREFIX + '-' + armTag + body + '-' + pad(check, 2);
+    return CONFIG.CODE_PREFIX + '-' + armTag + '-' + body;
+  }
+
+  /* 自解码，方便在控制台核对生成结果与 tools/decode_codes.py 是否一致 */
+  function readCode(code) {
+    var m = /([NCX])-([0-9A-Z]{6})\s*$/.exec(String(code).toUpperCase().replace(/\s/g, ''));
+    if (!m) return null;
+    var full = 0, i;
+    for (i = 0; i < 6; i++) {
+      var idx = ALPHABET.indexOf(m[2].charAt(i));
+      if (idx < 0) return null;
+      full = (full * 32) + idx;
+    }
+    var check = full & 31, v = Math.floor(full / 32), sum = 0;
+    for (i = 0; i < 25; i += 5) sum ^= (v >>> i) & 31;
+    return {
+      valid: sum === check,
+      arm: m[1] === 'N' ? 'narrative' : (m[1] === 'C' ? 'control' : 'unknown'),
+      minutes: (v >>> 18) & 127,
+      sectionsSeen: (v >>> 13) & 31,
+      maxScrollPct: ((v >>> 8) & 31) * 4,
+      cvdType: ['none', 'protan', 'deutan', 'tritan', 'achro', '?', '?', 'unknown'][(v >>> 5) & 7],
+      ctoolOpened: !!((v >>> 4) & 1),
+      ctoolExported: !!((v >>> 3) & 1),
+      imgAnalysed: !!((v >>> 2) & 1),
+      reducedMotion: !!((v >>> 1) & 1)
+    };
   }
 
   var gate = document.getElementById('gate');
@@ -272,10 +367,24 @@
   window.addEventListener('pagehide', function () { log('page_exit'); send(true); });
   window.addEventListener('beforeunload', function () { persist(); });
 
-  /* 便于调试与数据导出：在控制台执行 TTE.dump() */
+  /* 单页应用（实验站）一次只显示一屏，IntersectionObserver 看不到被
+     display:none 隐藏的其他屏。实验站在 show() 里调用 TTE.seen(id) 补记，
+     对照组是长页面，靠 IntersectionObserver 自动记录，两边最终都汇入
+     seenSections，编码方式一致。 */
+  function markSeen(id) {
+    if (!id || seenSections[id]) return;
+    seenSections[id] = activeSeconds();
+    log('section_view', id);
+  }
+
+  /* 页面用 TTE.set() 上报状态；TTE.dump()/decode() 便于调试与自查 */
   window.TTE = {
     config: CONFIG,
+    set: report,
+    seen: markSeen,
     dump: function () { return payload(); },
-    json: function () { return JSON.stringify(payload(), null, 2); }
+    json: function () { return JSON.stringify(payload(), null, 2); },
+    preview: function () { return makeCode(); },
+    decode: readCode
   };
 })();

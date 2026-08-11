@@ -442,20 +442,13 @@
   </ol>
 </section>
 
-<!-- ══════════════════════════════════════════════
-     曝光计时与完成码区块已移除。
-     tracker.js 仍在后台记录有效阅读时长、滚动深度与分节停留，
-     但如果不设置 CONFIG.ENDPOINT，这些数据只会留在被试自己的
-     浏览器里，无法回收。恢复完成码只需把下面这段贴回来：
-
-     <section id="gate">
-       <h2>阅读完成</h2>
-       <p>请在阅读完全文后，点击下方按钮获取完成码，并将其填回问卷。</p>
-       <button id="gateBtn" disabled>获取完成码</button>
-       <div id="gateCode" aria-live="polite"></div>
-       <p id="gateStatus"></p>
-     </section>
-     ══════════════════════════════════════════════ -->
+<section id="gate">
+  <h2>阅读完成</h2>
+  <p>请在阅读完全文后，点击下方按钮获取完成码，并将其填回问卷。</p>
+  <button id="gateBtn" disabled>获取完成码</button>
+  <div id="gateCode" aria-live="polite"></div>
+  <p id="gateStatus"></p>
+</section>
 
 </main>
 

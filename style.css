@@ -316,3 +316,46 @@ footer.colophon{
 @media (prefers-reduced-motion:reduce){
   *{animation:none !important;transition:none !important}
 }
+
+/* ============================================================
+   分页阅读（pager.js）
+   刻意保持朴素：无动画、无颜色编码、无模拟。对照组唯一新增的
+   交互是"推进到下一节"，与实验站的"继续"按钮对等。
+   ============================================================ */
+
+.pager-progress{
+  position:fixed;top:0;left:0;right:0;height:3px;z-index:50;
+  background:var(--rule-soft);
+}
+.pager-progress i{
+  display:block;height:100%;width:0;background:var(--ink);
+  transition:width .25s ease;
+}
+.pager-count{
+  position:absolute;right:12px;top:9px;
+  font-size:12px;color:var(--ink-faint);
+  font-variant-numeric:tabular-nums;
+}
+
+.pager-nav{
+  display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+  margin-top:40px;padding-top:22px;border-top:1px solid var(--rule-soft);
+}
+.pager-btn{
+  font:inherit;font-size:.95rem;
+  padding:13px 22px;min-height:44px;      /* 触屏可点面积 */
+  border:1px solid var(--ink);border-radius:2px;
+  background:var(--ink);color:var(--paper);
+  cursor:pointer;
+}
+.pager-btn.pager-back{
+  background:transparent;color:var(--ink-soft);border-color:var(--rule);
+}
+.pager-btn:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+
+main > section[id]{scroll-margin-top:24px}
+main > section[id] h2:focus{outline:none}
+
+@media(prefers-reduced-motion:reduce){
+  .pager-progress i{transition:none}
+}

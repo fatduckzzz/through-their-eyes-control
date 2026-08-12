@@ -23,27 +23,31 @@
    的完整事件流是回收不了的。为此完成码不再是单向哈希，而是把
    关键指标编码进码里：被试把码填回问卷，数据就随之回到你手上。
 
-     TTE-N-7K2MQF
-      │  │    └── 6 位 base32：25 位数据 + 5 位校验
+     TTE-N-7K2MQFH
+      │  │    └── 7 位 base32：30 位数据 + 5 位校验
       │  └─────── 组别：N=叙事（实验组），C=对照组
       └────────── 前缀
 
-   25 位数据的排布（高位在前）：
-     bit 24..18  有效阅读分钟数        0–127
-     bit 17..13  看过的分节数          0–31
-     bit 12..8   最大滚动深度 / 4      0–25（即 0–100%）
-     bit  7..5   CVD 类型              0=无 1=protan 2=deutan
+   30 位数据的排布（高位在前）：
+     bit 29..22  有效阅读时长 / 15 秒  0–255（最长 63 分 45 秒）
+     bit 21..16  挂钟时长（分钟）      0–63
+     bit 15..11  看过的分节数          0–31
+     bit 10..7   滚动深度              0–15 档（× 100/15 ≈ 百分比）
+     bit  6..4   CVD 类型              0=无 1=protan 2=deutan
                                        3=tritan 4=achro 7=未知
-     bit  4..0   标志位                bit4 打开过配色工具
-                                       bit3 导出过报告
-                                       bit2 分析过图片
-                                       bit1 系统开了减少动效
-                                       bit0 预留
+     bit     3   系统开了减少动效
+     bit  2..0   预留
 
-   实验站在运行时用 TTE.set() 上报自己的状态，例如：
+   为什么同时存两种时长：**挂钟时长 − 有效时长 = 被试离开或发呆的时间**。
+   有效 8 分 / 挂钟 9 分，是一口气读完；有效 8 分 / 挂钟 45 分，是开着
+   页面去干别的了。两者的效应可能不同，光看有效时长看不出来。
+
+   有效时长按 15 秒一档而不是按分钟：分钟精度对剂量—反应分析太粗，
+   5 分 05 秒和 5 分 55 秒会被记成同一个数。
+
+   实验站在运行时用 TTE.set() 上报自己的状态：
      TTE.set('cvdType', 2);        // 分配到第二色盲
-     TTE.set('ctoolOpened', true);
-   对照组不调用这些，对应位保持 0。两组的计时与编码逻辑完全一致。
+   对照组不调用，对应位保持"未知"。两组的计时与编码逻辑完全一致。
 
    解码脚本见 tools/decode_codes.py。
    ------------------------------------------------------------
@@ -59,10 +63,14 @@
   /* ---------- 配置 ---------- */
 
   var CONFIG = {
-    // 解锁完成码所需的"有效阅读时长"（秒）。两组必须相同。
-    // 对照组正文约 7,500 中文字，精读需 19–25 分钟；实验组约 12–15 分钟。
-    // 360 秒（6 分钟）对两者都过低，等于闸门形同虚设，故上调至 480。
-    MIN_ACTIVE_SECONDS: 480,
+    /* 解锁完成码所需的"有效阅读时长"（秒）。两组必须相同。
+
+       设成 5 分钟，而不是按"读完全文需要多久"来定。理由是闸门设高会
+       把没读够的人挡在门外，他们多半直接退出而不是回去继续读——流失
+       因此是选择性的，会偏样本。既然完成码里已经记了真实时长，就不必
+       靠闸门去强制，把剔除留到分析阶段做（规则请预注册）。
+       闸门在这里只起一个作用：挡住点开就跳过的人。 */
+    MIN_ACTIVE_SECONDS: 300,
 
     // 连续无操作超过这个秒数即暂停计时（防止挂机刷时长）
     IDLE_TIMEOUT_SECONDS: 60,
@@ -270,25 +278,44 @@
   var ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
   function makeCode() {
-    var mins     = Math.min(127, Math.floor(activeSeconds() / 60));
+    /* 有效时长按 15 秒一档存，不是按分钟。
+
+       分钟精度对剂量—反应分析太粗：读了 5 分 05 秒和 5 分 55 秒会被
+       记成同一个数。15 秒一档、8 位，最长记到 63 分 45 秒，够用。 */
+    var activeQ  = Math.min(255, Math.round(activeSeconds() / 15));
+
+    /* 挂钟时长另存一份。它减去有效时长 = 被试离开页面或发呆的时间，
+       这个差值本身就是信息：有效 8 分 / 挂钟 9 分 是一口气读完，
+       有效 8 分 / 挂钟 45 分 是开着页面去干别的了。 */
+    var wallMin  = Math.min(63, Math.floor((Date.now() - startedAt) / 60000));
+
     var sections = Math.min(31, Object.keys(seenSections).length);
-    var scroll   = Math.min(25, Math.round(maxScrollPct / 4));
+    var scroll15 = Math.min(15, Math.round(maxScrollPct / 100 * 15));
     var type     = (reported.cvdType === null) ? 7 : (reported.cvdType & 7);
 
-    var flags = (reported.ctoolOpened   ? 1 : 0) << 4 |
-                (reported.ctoolExported ? 1 : 0) << 3 |
-                (reported.imgAnalysed   ? 1 : 0) << 2 |
-                (reducedMotion          ? 1 : 0) << 1;
-
-    /* 25 位载荷。JS 位运算是 32 位有符号的，25+5 位仍在安全范围内。 */
-    var v = (mins << 18) | (sections << 13) | (scroll << 8) | (type << 5) | flags;
+    /* 30 位载荷（高位在前）：
+         29..22  有效时长 / 15 秒     8 位
+         21..16  挂钟分钟             6 位
+         15..11  看过的分节数         5 位
+         10..7   滚动深度（0–15 档）  4 位
+          6..4   CVD 类型             3 位
+             3   系统开了减少动效     1 位
+          2..0   预留                 3 位
+       最大值 2^30-1，仍在 JS 32 位按位运算的安全范围内。 */
+    var v = (activeQ << 22) | (wallMin << 16) | (sections << 11) |
+            (scroll15 << 7) | (type << 4) | ((reducedMotion ? 1 : 0) << 3);
 
     var check = 0, i;
-    for (i = 0; i < 25; i += 5) check ^= (v >>> i) & 31;
+    for (i = 0; i < 30; i += 5) check ^= (v >>> i) & 31;
 
-    var full = ((v << 5) | check) >>> 0;   // 30 位
+    /* 30+5=35 位超过 32 位按位运算的范围，改用乘除。
+       JS 的数字是双精度浮点，2^53 以内整数运算是精确的。 */
+    var full = v * 32 + check;
     var body = '';
-    for (i = 25; i >= 0; i -= 5) body += ALPHABET[(full >>> i) & 31];
+    for (i = 0; i < 7; i++) {
+      body = ALPHABET[full % 32] + body;
+      full = Math.floor(full / 32);
+    }
 
     var armTag = ARM === 'narrative' ? 'N' : (ARM === 'control' ? 'C' : 'X');
     return CONFIG.CODE_PREFIX + '-' + armTag + '-' + body;
@@ -296,27 +323,33 @@
 
   /* 自解码，方便在控制台核对生成结果与 tools/decode_codes.py 是否一致 */
   function readCode(code) {
-    var m = /([NCX])-([0-9A-Z]{6})\s*$/.exec(String(code).toUpperCase().replace(/\s/g, ''));
+    var m = /([NCX])-([0-9A-Z]{7})\s*$/.exec(String(code).toUpperCase().replace(/\s/g, ''));
     if (!m) return null;
+
     var full = 0, i;
-    for (i = 0; i < 6; i++) {
+    for (i = 0; i < 7; i++) {
       var idx = ALPHABET.indexOf(m[2].charAt(i));
       if (idx < 0) return null;
-      full = (full * 32) + idx;
+      full = full * 32 + idx;
     }
-    var check = full & 31, v = Math.floor(full / 32), sum = 0;
-    for (i = 0; i < 25; i += 5) sum ^= (v >>> i) & 31;
+
+    var check = full % 32, v = Math.floor(full / 32), sum = 0;
+    for (i = 0; i < 30; i += 5) sum ^= (v >>> i) & 31;
+
+    var activeSec = ((v >>> 22) & 255) * 15;
+    var wallMin = (v >>> 16) & 63;
+
     return {
       valid: sum === check,
       arm: m[1] === 'N' ? 'narrative' : (m[1] === 'C' ? 'control' : 'unknown'),
-      minutes: (v >>> 18) & 127,
-      sectionsSeen: (v >>> 13) & 31,
-      maxScrollPct: ((v >>> 8) & 31) * 4,
-      cvdType: ['none', 'protan', 'deutan', 'tritan', 'achro', '?', '?', 'unknown'][(v >>> 5) & 7],
-      ctoolOpened: !!((v >>> 4) & 1),
-      ctoolExported: !!((v >>> 3) & 1),
-      imgAnalysed: !!((v >>> 2) & 1),
-      reducedMotion: !!((v >>> 1) & 1)
+      activeSeconds: activeSec,
+      activeMinutes: +(activeSec / 60).toFixed(2),
+      wallMinutes: wallMin,
+      idleMinutes: Math.max(0, +(wallMin - activeSec / 60).toFixed(2)),
+      sectionsSeen: (v >>> 11) & 31,
+      maxScrollPct: Math.round(((v >>> 7) & 15) / 15 * 100),
+      cvdType: ['none', 'protan', 'deutan', 'tritan', 'achro', '?', '?', 'unknown'][(v >>> 4) & 7],
+      reducedMotion: !!((v >>> 3) & 1)
     };
   }
 

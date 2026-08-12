@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150" role="img" aria-label="手机辅助功能设置中的色彩滤镜面板示意">
+  <!--
+    系统级色彩滤镜的设置面板示意图。
+
+    刻意不画"开启滤镜后颜色变成什么样"：那属于色觉模拟，而模拟是
+    实验组的操纵变量，不能渗进对照组。这里只呈现界面结构——它在
+    辅助功能里、有总开关、按色觉类型分成几个选项——信息量与实验站
+    那张 logo 相当或更高，且两站可以放同一份文件。
+
+    没有文字，因此中英两版通用；说明文字放在 HTML 的 figcaption 里。
+
+    根节点同时写了 width/height 和 viewBox：只给 viewBox 的话，通过
+    <img> 引用时浏览器拿不到固有尺寸，会把它渲染成 2px 宽。
+  -->
+  <rect x="46" y="4" width="108" height="142" rx="12" fill="#ffffff" stroke="#1c1c1c" stroke-width="1.6"/>
+  <rect x="86" y="8" width="28" height="3" rx="1.5" fill="#d8d8d8"/>
+
+  <!-- 返回箭头 + 标题占位：表明这是设置里的一个子页面 -->
+  <path d="M58 26 l-4 4 l4 4" fill="none" stroke="#767676" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="66" y="27" width="42" height="6" rx="3" fill="#1c1c1c"/>
+
+  <line x1="46" y1="42" x2="154" y2="42" stroke="#eaeaea" stroke-width="1"/>
+
+  <!-- 总开关：唯一用到强调色的地方 -->
+  <rect x="58" y="52" width="46" height="5" rx="2.5" fill="#4a4a4a"/>
+  <rect x="120" y="49" width="24" height="13" rx="6.5" fill="#1c1c1c"/>
+  <circle cx="137.5" cy="55.5" r="4.6" fill="#ffffff"/>
+
+  <line x1="46" y1="72" x2="154" y2="72" stroke="#eaeaea" stroke-width="1"/>
+
+  <!-- 四个按色觉类型分列的选项，第二项被选中 -->
+  <g>
+    <circle cx="62" cy="84" r="4.4" fill="none" stroke="#767676" stroke-width="1.4"/>
+    <rect x="74" y="81" width="34" height="5" rx="2.5" fill="#767676"/>
+  </g>
+  <g>
+    <circle cx="62" cy="100" r="4.4" fill="none" stroke="#1c1c1c" stroke-width="1.4"/>
+    <circle cx="62" cy="100" r="2.2" fill="#1c1c1c"/>
+    <rect x="74" y="97" width="58" height="5" rx="2.5" fill="#1c1c1c"/>
+  </g>
+  <g>
+    <circle cx="62" cy="116" r="4.4" fill="none" stroke="#767676" stroke-width="1.4"/>
+    <rect x="74" y="113" width="52" height="5" rx="2.5" fill="#767676"/>
+  </g>
+  <g>
+    <circle cx="62" cy="132" r="4.4" fill="none" stroke="#767676" stroke-width="1.4"/>
+    <rect x="74" y="129" width="44" height="5" rx="2.5" fill="#767676"/>
+  </g>
+</svg>

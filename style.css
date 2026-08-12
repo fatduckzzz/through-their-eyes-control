@@ -396,3 +396,4 @@ main > section[id] h2:focus{outline:none}
   .ba{grid-template-columns:1fr}
   .shot-row img{max-width:calc(50% - 4px)}
 }
+.shot-narrow img{max-width:238px;margin:0 auto}

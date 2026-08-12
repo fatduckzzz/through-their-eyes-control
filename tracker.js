@@ -320,6 +320,38 @@
     };
   }
 
+  /* ---------- 文案 ----------
+
+     实验站有 EN/中文 切换，但 tracker.js 之前的提示语是写死的中文——
+     切到英文时闸门那块会中英混排。跟着 <html lang> 走即可，两站仍是
+     同一份文件。 */
+  var STR = {
+    zh: {
+      copy: '复制完成码', copied: '已复制 ✓', copyFail: '复制失败，请手动选中',
+      issued: '完成码已生成',
+      issuedNote: '请复制上方完成码，返回问卷填写。有效阅读时长：',
+      min: ' 分 ', sec: ' 秒。',
+      ready: '已达到最短阅读时长，可以获取完成码。',
+      remainA: '还需要阅读约 ', remainB: '。（离开页面或长时间无操作时不计入）',
+      minShort: ' 分 ', secShort: ' 秒'
+    },
+    en: {
+      copy: 'Copy code', copied: 'Copied ✓', copyFail: 'Copy failed — select it manually',
+      issued: 'Code generated',
+      issuedNote: 'Copy the code above and paste it back into the questionnaire. Active reading time: ',
+      min: ' min ', sec: ' sec.',
+      ready: 'Minimum reading time reached — you can get your completion code.',
+      remainA: 'About ', remainB: ' of reading left. (Time away from the page, or long pauses, does not count.)',
+      minShort: ' min ', secShort: ' sec'
+    }
+  };
+
+  function T(key) {
+    var lang = (document.documentElement.getAttribute('lang') || 'zh').toLowerCase();
+    var d = STR[lang.indexOf('en') === 0 ? 'en' : 'zh'];
+    return d[key] != null ? d[key] : key;
+  }
+
   var gate = document.getElementById('gate');
   var btn = document.getElementById('gateBtn');
   var codeBox = document.getElementById('gateCode');
@@ -330,16 +362,73 @@
     var left = CONFIG.MIN_ACTIVE_SECONDS - activeSeconds();
     if (left <= 0) {
       btn.disabled = false;
-      if (status) status.textContent = '已达到最短阅读时长，可以获取完成码。';
+      if (status) status.textContent = T('ready');
     } else {
       btn.disabled = true;
       if (status) {
         var m = Math.floor(left / 60), s = left % 60;
-        status.textContent = '还需要阅读约 ' + (m > 0 ? m + ' 分 ' : '') + pad(s, 2) + ' 秒。' +
-          '（离开页面或长时间无操作时不计入）';
+        status.textContent = T('remainA') +
+          (m > 0 ? m + T('minShort') : '') + pad(s, 2) + T('secShort') + T('remainB');
       }
     }
   }
+
+  /* ---------- 一键复制 ----------
+
+     没有后端，完成码就是数据回到你手上的唯一通道——被试抄错一个字符，
+     那个人的埋点就全丢了。所以别让他们手抄：给一个按钮，点一下进剪贴板。
+
+     navigator.clipboard 需要安全上下文（HTTPS 或 localhost），且部分
+     内置浏览器不给权限，因此保留 execCommand 兜底。两条都失败时把码
+     选中，至少能长按复制。 */
+  function copyCode() {
+    if (!issuedCode) return;
+
+    function feedback(ok) {
+      if (!copyBtn) return;
+      copyBtn.textContent = ok ? T('copied') : T('copyFail');
+      setTimeout(function () { copyBtn.textContent = T('copy'); }, 2400);
+      log(ok ? 'code_copied' : 'code_copy_failed');
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(issuedCode).then(
+        function () { feedback(true); },
+        function () { legacyCopy(); }
+      );
+    } else {
+      legacyCopy();
+    }
+
+    function legacyCopy() {
+      var ta = document.createElement('textarea');
+      ta.value = issuedCode;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '0';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, issuedCode.length);   // iOS 需要显式指定范围
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      if (!ok) selectCode();
+      feedback(ok);
+    }
+  }
+
+  /* 复制不成功时把码整段选中，被试长按就能复制 */
+  function selectCode() {
+    if (!codeBox || !window.getSelection || !document.createRange) return;
+    var range = document.createRange();
+    range.selectNodeContents(codeBox);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  var copyBtn = null;
 
   if (btn) {
     btn.addEventListener('click', function () {
@@ -347,13 +436,29 @@
       unlocked = true;
       issuedCode = makeCode();
       btn.disabled = true;
-      btn.textContent = '完成码已生成';
+      btn.textContent = T('issued');
+
       if (codeBox) {
         codeBox.style.display = 'block';
         codeBox.textContent = issuedCode;
       }
-      if (status) status.textContent = '请复制上方完成码，返回问卷填写。有效阅读时长：' +
-        Math.floor(activeSeconds() / 60) + ' 分 ' + pad(activeSeconds() % 60, 2) + ' 秒。';
+
+      if (!copyBtn) {
+        copyBtn = document.createElement('button');
+        copyBtn.type = 'button';
+        copyBtn.id = 'gateCopy';
+        copyBtn.className = btn.className;      // 与"获取完成码"同款，两站外观自动一致
+        copyBtn.textContent = T('copy');
+        copyBtn.addEventListener('click', copyCode);
+        (codeBox || btn).parentNode.insertBefore(copyBtn, (codeBox || btn).nextSibling);
+      }
+
+      if (status) {
+        status.textContent = T('issuedNote') +
+          Math.floor(activeSeconds() / 60) + T('min') + pad(activeSeconds() % 60, 2) + T('sec');
+      }
+
+      selectCode();          // 就算不点按钮，长按也能直接复制
       log('code_issued', issuedCode);
       send(false);
     });

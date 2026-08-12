@@ -267,7 +267,8 @@ footer.colophon{
   font-family:inherit;
 }
 #gate p{margin:0 0 .9rem;color:var(--ink-soft);font-size:.88rem}
-#gateBtn{
+#gateBtn,
+#gateCopy{
   font:inherit;
   font-size:.92rem;
   padding:.65rem 1.4rem;
@@ -276,7 +277,8 @@ footer.colophon{
   color:var(--ink);
   cursor:pointer;
 }
-#gateBtn[disabled]{
+#gateBtn[disabled],
+#gateCopy[disabled]{
   border-color:var(--rule);
   color:var(--ink-faint);
   cursor:not-allowed;
@@ -359,3 +361,8 @@ main > section[id] h2:focus{outline:none}
 @media(prefers-reduced-motion:reduce){
   .pager-progress i{transition:none}
 }
+
+/* 复制按钮沿用 #gateBtn 的样式（见上），只补间距。
+   对照站的按钮是用 ID 选中的、没有 class，所以不能靠继承 className。 */
+#gateCopy{margin-top:10px}
+#gateCode{user-select:all;-webkit-user-select:all}

@@ -397,3 +397,27 @@ main > section[id] h2:focus{outline:none}
   .shot-row img{max-width:calc(50% - 4px)}
 }
 .shot-narrow img{max-width:238px;margin:0 auto}
+
+/* ============================================================
+   第二节：四种类型的对照色块
+
+   同一组红绿蓝黄圆点，分别套上四种色觉的滤镜。滤镜矩阵与色块
+   图形都是从实验站逐字复制的——实验站在选择类型那一屏就是这么
+   展示的，抄一遍数字反而可能在某一位上分叉。
+
+   剂量刻意与实验站持平：只有这一组色块，不做整场景模拟。操纵
+   变量是"被分配一种类型、以第一人称过完一整天"，不是"见过模拟"。
+   ============================================================ */
+
+.pv-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:.4rem 0 .2rem}
+.pv-cell{margin:0}
+.pv-cell .pv{width:100%;height:auto;display:block;border-radius:6px;border:1px solid var(--rule)}
+.pv-cell figcaption{margin-top:.45rem;line-height:1.45}
+.pv-cell figcaption b{display:block;font-size:.82rem;font-weight:600;color:var(--ink)}
+.pv-cell figcaption span{display:block;font-size:.68rem;color:var(--ink-faint);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.02em}
+
+@media(max-width:640px){
+  /* 五格挤成一行在手机上每格不到 60px，圆点糊成一片，改成两行 */
+  .pv-row{grid-template-columns:repeat(3,1fr);gap:12px}
+}

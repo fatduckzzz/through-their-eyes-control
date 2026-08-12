@@ -9,6 +9,26 @@
 </head>
 <body data-arm="control">
 
+<!-- ══════════════════════════════════════════════════════════
+     色觉模拟滤镜与色块图形，逐字复制自实验站 index.html。
+
+     第二节需要展示"四种类型分别看到什么"——实验站在选择类型那一屏
+     就是这么做的（四张卡片各套一个滤镜）。矩阵与图形都用同一份，
+     两组看到的模拟结果才逐位一致；抄一遍数字就可能在某一位上分叉。
+
+     剂量也一样：只有这一组四点色块，不做整场景模拟。操纵变量不是
+     "见过模拟"，而是"被分配一种类型、以第一人称过完一整天"。
+     ══════════════════════════════════════════════════════════ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="f-achro" color-interpolation-filters="linearRGB"><feColorMatrix type="matrix" values="0.299 0.587 0.114 0 0 0.299 0.587 0.114 0 0 0.299 0.587 0.114 0 0 0 0 0 1 0"/></filter>
+    <filter id="f-protan" color-interpolation-filters="linearRGB"><feColorMatrix type="matrix" values="0.567 0.433 0 0 0 0.558 0.442 0 0 0 0 0.242 0.758 0 0 0 0 0 1 0"/></filter>
+    <filter id="f-deutan" color-interpolation-filters="linearRGB"><feColorMatrix type="matrix" values="0.625 0.375 0 0 0 0.7 0.3 0 0 0 0 0.3 0.7 0 0 0 0 0 1 0"/></filter>
+    <filter id="f-tritan" color-interpolation-filters="linearRGB"><feColorMatrix type="matrix" values="0.95 0.05 0 0 0 0 0.433 0.567 0 0 0 0.475 0.525 0 0 0 0 0 1 0"/></filter>
+    <symbol id="pv" viewBox="0 0 100 100"><rect width="100" height="100" fill="#16161c"/><circle cx="28" cy="34" r="15" fill="#e23b2e"/><circle cx="62" cy="34" r="15" fill="#6fae3e"/><circle cx="28" cy="70" r="15" fill="#46a6ff"/><circle cx="62" cy="70" r="15" fill="#f4b400"/></symbol>
+  </defs>
+</svg>
+
 <header class="masthead">
   <div class="wrap">
     <p class="eyebrow">科普说明 · 阅读材料</p>
@@ -75,6 +95,34 @@
   </dl>
 
   <p>需要说明的是，"盲"这个字在中文里容易造成误解。除极罕见的全色盲外，多数色觉障碍者并非完全看不到某种颜色，而是分辨能力下降：在颜色差异足够大、光线足够好、面积足够大的情况下他们可以分辨；一旦颜色接近、色块很小、或者光线不佳，分辨就会失败。这解释了为什么同一个人有时"看得出来"、有时"看不出来"——这不是态度问题，而是条件问题。</p>
+
+  <div class="figure">
+    <p class="cap">同一组颜色，在四种色觉下分别是什么样</p>
+    <div class="pv-row">
+      <figure class="pv-cell">
+        <svg class="pv" viewBox="0 0 100 100" role="img" aria-label="正常色觉"><use href="#pv"/></svg>
+        <figcaption><b>正常色觉</b><span>normal</span></figcaption>
+      </figure>
+      <figure class="pv-cell">
+        <svg class="pv" style="filter:url(#f-deutan)" viewBox="0 0 100 100" role="img" aria-label="绿色盲"><use href="#pv"/></svg>
+        <figcaption><b>绿色盲</b><span>deuteranopia</span></figcaption>
+      </figure>
+      <figure class="pv-cell">
+        <svg class="pv" style="filter:url(#f-protan)" viewBox="0 0 100 100" role="img" aria-label="红色盲"><use href="#pv"/></svg>
+        <figcaption><b>红色盲</b><span>protanopia</span></figcaption>
+      </figure>
+      <figure class="pv-cell">
+        <svg class="pv" style="filter:url(#f-tritan)" viewBox="0 0 100 100" role="img" aria-label="蓝黄色盲"><use href="#pv"/></svg>
+        <figcaption><b>蓝黄色盲</b><span>tritanopia</span></figcaption>
+      </figure>
+      <figure class="pv-cell">
+        <svg class="pv" style="filter:url(#f-achro)" viewBox="0 0 100 100" role="img" aria-label="全色盲"><use href="#pv"/></svg>
+        <figcaption><b>全色盲</b><span>achromatopsia</span></figcaption>
+      </figure>
+    </div>
+    <p class="src">四个圆点的原始颜色为红、绿、蓝、黄。模拟基于二色视矩阵，是近似结果，不等于任何一位具体使用者的真实感知——个体差异很大，多数人属于程度较轻的"色弱"而非"色盲"。</p>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════════════════ -->

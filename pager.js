@@ -91,6 +91,22 @@
     window.scrollTo(0, 0);
 
     if (window.TTE && TTE.seen) TTE.seen(steps[current].id);
+    warm(i + 1);
+    warm(i + 2);
+  }
+
+  /* 提前把后面两节的图片取下来。
+
+     分页之后其余各节是 display:none，浏览器不会认为 lazy 图"接近视口"，
+     于是它们一直不加载——等被试翻到第八节，1.6 MB 才开始下，慢网上会
+     卡住一下。提前两节预热，图片在阅读间隙里悄悄下完。 */
+  function warm(i) {
+    if (i < 0 || i >= steps.length) return;
+    var imgs = steps[i].querySelectorAll('img[loading="lazy"]');
+    for (var k = 0; k < imgs.length; k++) {
+      var src = imgs[k].getAttribute('src');
+      if (src) new Image().src = src;      // 进浏览器缓存，真正显示时秒开
+    }
   }
 
   steps.forEach(function (s, i) { s.hidden = (i !== 0); });

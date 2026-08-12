@@ -366,3 +366,33 @@ main > section[id] h2:focus{outline:none}
    对照站的按钮是用 ID 选中的、没有 class，所以不能靠继承 className。 */
 #gateCopy{margin-top:10px}
 #gateCode{user-select:all;-webkit-user-select:all}
+
+/* ============================================================
+   第七、八节的配图
+
+   实验站在这两节里用的是真实截图与可切换的前后对比图；对照站
+   原来只有文字。同一张伦敦地铁图，文字说不出线路上的纹理长什么
+   样——这属于信息不对称，不是形式差异，所以补上。
+
+   用的是实验站**同一批**素材：换成别的图等于给对照组引入实验组
+   没见过的信息。动图取了静帧，对照站保持无动画。
+   ============================================================ */
+
+.shot{margin:1.1rem 0 1.4rem;padding:0}
+.shot img{max-width:100%;height:auto;display:block;border:1px solid var(--rule);background:#fff}
+.shot-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+.shot-row img{max-width:calc(25% - 6px);min-width:64px}
+.shot figcaption{margin-top:.5rem;font-size:.8rem;color:var(--ink-faint);line-height:1.6}
+
+/* 改前 / 改后并排。实验站那边是点击切换的，交互属于操纵变量，
+   所以这里两个状态同时呈现，不做切换。 */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:1.1rem 0 1.4rem}
+.ba > div{border:1px solid var(--rule);background:#fff;padding:8px}
+.ba svg{width:100%;height:auto;display:block}
+.ba-lbl{display:block;font-size:.72rem;letter-spacing:.08em;color:var(--ink-faint);margin-bottom:6px}
+.ba figcaption{grid-column:1 / -1;font-size:.8rem;color:var(--ink-faint);line-height:1.6}
+
+@media(max-width:560px){
+  .ba{grid-template-columns:1fr}
+  .shot-row img{max-width:calc(50% - 4px)}
+}

@@ -204,21 +204,51 @@
   <p><strong>原状：</strong>四根柱子使用四种颜色区分。在部分色觉条件下，其中两到三根几乎没有区别。</p>
   <p><strong>改进：</strong>为每根柱子加上不同的填充纹理（斜线、圆点、网格、竖线），并在柱子上或旁边直接标注系列名称。颜色保留，但已不是唯一线索。</p>
 
+  <figure class="ba">
+    <div><span class="ba-lbl">改前</span><svg viewBox="0 0 200 120" role="img" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="30" width="28" height="70" fill="#c0392b"/><rect x="64" y="55" width="28" height="45" fill="#27ae60"/><rect x="106" y="15" width="28" height="85" fill="#c0392b"/><rect x="148" y="45" width="28" height="55" fill="#27ae60"/><line x1="14" y1="100" x2="190" y2="100" stroke="#1c1c1c" stroke-width="1.5"/></svg></div>
+    <div><span class="ba-lbl">改后</span><svg viewBox="0 0 200 120" role="img" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="hatchA" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="6" fill="#fff" opacity=".55"/></pattern></defs><rect x="22" y="30" width="28" height="70" fill="#c0392b"/><rect x="22" y="30" width="28" height="70" fill="url(#hatchA)"/><text x="36" y="26" font-size="9" text-anchor="middle" fill="#1c1c1c">甲</text><rect x="64" y="55" width="28" height="45" fill="#27ae60"/><text x="78" y="51" font-size="9" text-anchor="middle" fill="#1c1c1c">乙</text><rect x="106" y="15" width="28" height="85" fill="#c0392b"/><rect x="106" y="15" width="28" height="85" fill="url(#hatchA)"/><text x="120" y="11" font-size="9" text-anchor="middle" fill="#1c1c1c">丙</text><rect x="148" y="45" width="28" height="55" fill="#27ae60"/><text x="162" y="41" font-size="9" text-anchor="middle" fill="#1c1c1c">丁</text><line x1="14" y1="100" x2="190" y2="100" stroke="#1c1c1c" stroke-width="1.5"/></svg></div>
+    <figcaption>柱状图：颜色保留，另加一条颜色之外的线索。</figcaption>
+  </figure>
+
   <h3>7.2 交通信号灯 —— 加形状，加倒计时</h3>
   <p><strong>原状：</strong>三个相同形状的圆灯。颜色接近时只能依靠位置判断；遇到横排信号灯时，位置线索也可能失效。</p>
   <p><strong>改进：</strong>使用不同形状（如方形通行标志与圆形禁止标志）、加入数字倒计时、并将通行灯调整为偏蓝绿的色调。线索从一条增加到三条。</p>
+
+  <figure class="ba">
+    <div><span class="ba-lbl">改前</span><svg viewBox="0 0 200 120" role="img" xmlns="http://www.w3.org/2000/svg"><rect x="78" y="12" width="44" height="96" rx="8" fill="#2b2b2b"/><circle cx="100" cy="30" r="11" fill="#c0392b" opacity=".25"/><circle cx="100" cy="60" r="11" fill="#e0a800" opacity=".25"/><circle cx="100" cy="90" r="11" fill="#27ae60" opacity="1"/></svg></div>
+    <div><span class="ba-lbl">改后</span><svg viewBox="0 0 200 120" role="img" xmlns="http://www.w3.org/2000/svg"><rect x="78" y="12" width="44" height="96" rx="8" fill="#2b2b2b"/><circle cx="100" cy="30" r="11" fill="#c0392b" opacity=".25"/><circle cx="100" cy="60" r="11" fill="#e0a800" opacity=".25"/><circle cx="100" cy="90" r="11" fill="#27ae60" opacity="1"/><path d="M97 84 l3 -6 l4 6 M100 78 v-5 M100 73 a2.5 2.5 0 1 1 0 -.1" stroke="#0b3d1f" stroke-width="1.6" fill="none" stroke-linecap="round"/><rect x="132" y="46" width="30" height="28" rx="4" fill="#2b2b2b"/><text x="147" y="66" font-size="17" text-anchor="middle" fill="#fff">8</text></svg></div>
+    <figcaption>交通信号灯：颜色保留，另加一条颜色之外的线索。</figcaption>
+  </figure>
 
   <h3>7.3 表单校验 —— 加图标，加一句说明</h3>
   <p><strong>原状：</strong>红色边框表示错误，绿色边框表示通过。两种颜色难以区分时，错误标示等同于未标示。</p>
   <p><strong>改进：</strong>在出错栏位加上「✕」图标，在通过栏位加上「✓」图标，并直接写出错误原因，例如"这个日期不存在——请检查月份"。颜色保留，但使用者不必依赖颜色。</p>
 
+  <figure class="ba">
+    <div><span class="ba-lbl">改前</span><svg viewBox="0 0 200 120" role="img" xmlns="http://www.w3.org/2000/svg"><rect x="18" y="22" width="164" height="30" rx="4" fill="none" stroke="#c0392b" stroke-width="2"/><rect x="18" y="68" width="164" height="30" rx="4" fill="none" stroke="#27ae60" stroke-width="2"/></svg></div>
+    <div><span class="ba-lbl">改后</span><svg viewBox="0 0 200 120" role="img" xmlns="http://www.w3.org/2000/svg"><rect x="18" y="22" width="164" height="30" rx="4" fill="none" stroke="#c0392b" stroke-width="2"/><circle cx="33" cy="37" r="7" fill="none" stroke="#c0392b" stroke-width="2"/><line x1="33" y1="33" x2="33" y2="38" stroke="#c0392b" stroke-width="2"/><circle cx="33" cy="41" r="1" fill="#c0392b"/><text x="48" y="41" font-size="9" fill="#1c1c1c">手机号格式不正确</text><rect x="18" y="68" width="164" height="30" rx="4" fill="none" stroke="#27ae60" stroke-width="2"/><path d="M28 83 l4 5 l8 -10" stroke="#27ae60" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><text x="48" y="87" font-size="9" fill="#1c1c1c">已通过验证</text></svg></div>
+    <figcaption>表单校验：颜色保留，另加一条颜色之外的线索。</figcaption>
+  </figure>
+
   <h3>7.4 地铁线路图 —— 加线型，加线路名</h3>
   <p><strong>原状：</strong>两条线路仅以颜色区分。看错即意味着坐向城市的另一端。</p>
   <p><strong>改进：</strong>将其中一条改为虚线或加入重复纹理，并为两条线路标注名称与编号。即使整张图转为灰阶，线路仍可区分。</p>
 
+  <figure class="ba">
+    <div><span class="ba-lbl">改前</span><svg viewBox="0 0 200 120" role="img" xmlns="http://www.w3.org/2000/svg"><line x1="26" y1="34" x2="174" y2="34" stroke="#c0392b" stroke-width="5"/><circle cx="26" cy="34" r="4.5" fill="#fff" stroke="#1c1c1c" stroke-width="1.6"/><circle cx="100" cy="34" r="4.5" fill="#fff" stroke="#1c1c1c" stroke-width="1.6"/><circle cx="174" cy="34" r="4.5" fill="#fff" stroke="#1c1c1c" stroke-width="1.6"/><line x1="26" y1="74" x2="174" y2="74" stroke="#27ae60" stroke-width="5"/><circle cx="26" cy="74" r="4.5" fill="#fff" stroke="#1c1c1c" stroke-width="1.6"/><circle cx="100" cy="74" r="4.5" fill="#fff" stroke="#1c1c1c" stroke-width="1.6"/><circle cx="174" cy="74" r="4.5" fill="#fff" stroke="#1c1c1c" stroke-width="1.6"/></svg></div>
+    <div><span class="ba-lbl">改后</span><svg viewBox="0 0 200 120" role="img" xmlns="http://www.w3.org/2000/svg"><line x1="26" y1="34" x2="174" y2="34" stroke="#c0392b" stroke-width="5"/><circle cx="26" cy="34" r="4.5" fill="#fff" stroke="#1c1c1c" stroke-width="1.6"/><circle cx="100" cy="34" r="4.5" fill="#fff" stroke="#1c1c1c" stroke-width="1.6"/><circle cx="174" cy="34" r="4.5" fill="#fff" stroke="#1c1c1c" stroke-width="1.6"/><text x="26" y="24" font-size="9" fill="#1c1c1c">1 号线</text><line x1="26" y1="74" x2="174" y2="74" stroke="#27ae60" stroke-width="5" stroke-dasharray="10 6"/><circle cx="26" cy="74" r="4.5" fill="#fff" stroke="#1c1c1c" stroke-width="1.6"/><circle cx="100" cy="74" r="4.5" fill="#fff" stroke="#1c1c1c" stroke-width="1.6"/><circle cx="174" cy="74" r="4.5" fill="#fff" stroke="#1c1c1c" stroke-width="1.6"/><text x="26" y="64" font-size="9" fill="#1c1c1c">2 号线</text></svg></div>
+    <figcaption>地铁线路图：颜色保留，另加一条颜色之外的线索。</figcaption>
+  </figure>
+
   <h3>7.5 项目管理标签 —— 加图案，加文字状态</h3>
   <p><strong>原状：</strong>看板上的标签仅为几条颜色。红、绿、黄一旦混淆，整块看板就无法表达优先级。</p>
   <p><strong>改进：</strong>为每个标签加上不同图案，并写出文字状态（"紧急"、"已完成"、"待确认"）。颜色保留，但任务状态不再仅靠颜色区分。</p>
+  <figure class="ba">
+    <div><span class="ba-lbl">改前</span><svg viewBox="0 0 200 120" role="img" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="18" width="58" height="22" rx="11" fill="#c0392b"/><rect x="20" y="52" width="58" height="22" rx="11" fill="#e0a800"/><rect x="20" y="86" width="58" height="22" rx="11" fill="#27ae60"/></svg></div>
+    <div><span class="ba-lbl">改后</span><svg viewBox="0 0 200 120" role="img" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="dots" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.4" fill="#fff" opacity=".7"/></pattern></defs><rect x="20" y="18" width="92" height="22" rx="11" fill="#c0392b"/><rect x="20" y="18" width="92" height="22" rx="11" fill="url(#dots)"/><text x="34" y="33" font-size="10" fill="#fff">待处理</text><rect x="20" y="52" width="92" height="22" rx="11" fill="#e0a800"/><text x="34" y="67" font-size="10" fill="#fff">进行中</text><rect x="20" y="86" width="92" height="22" rx="11" fill="#27ae60"/><text x="34" y="101" font-size="10" fill="#fff">已完成</text></svg></div>
+    <figcaption>项目管理标签：颜色保留，另加一条颜色之外的线索。</figcaption>
+  </figure>
+
 </section>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -231,26 +261,85 @@
   <p>Google 在 2020 年的 Workspace 图标系列容易混淆——Gmail、Drive、Calendar、Meet 都采用了相似的四色圆角方块，轮廓高度接近。2026 年的改版把各应用的轮廓与主色调明显拉开。Spotify 用一个小圆点标示已开启的按钮；Trello 的色盲模式会为标签加上图案。颜色仍在，但旁边多了一条线索。</p>
   <p>补充线索的收益不限于色觉障碍者：在强光下、低亮度屏幕上，或注意力分散时，普通用户同样受益。</p>
 
+  <figure class="shot shot-row">
+      <img src="assets/google_before_gmail.jpg" alt="" loading="lazy" decoding="async">
+      <img src="assets/google_before_drive.jpg" alt="" loading="lazy" decoding="async">
+      <img src="assets/google_before_calendar.jpg" alt="" loading="lazy" decoding="async">
+      <img src="assets/google_before_meet.jpg" alt="" loading="lazy" decoding="async">
+    <figcaption>2020 年的 Workspace 图标：Gmail、Drive、Calendar、Meet 轮廓高度接近。</figcaption>
+  </figure>
+
+  <figure class="shot">
+      <img src="assets/google_after_composite.jpg" alt="" loading="lazy" decoding="async">
+    <figcaption>2026 年改版：每个应用的轮廓与主色调明显拉开。</figcaption>
+  </figure>
+
+  <figure class="shot">
+      <img src="assets/spotify_dot.jpg" alt="" loading="lazy" decoding="async">
+    <figcaption>Spotify 用一个小圆点标示已开启的按钮。</figcaption>
+  </figure>
+
+  <figure class="shot">
+      <img src="assets/trello_colorblind_static.png" alt="" loading="lazy" decoding="async">
+    <figcaption>Trello 的色盲模式为标签加上图案。</figcaption>
+  </figure>
+
   <h3>8.2 系统级色彩滤镜（iOS 与 Android）</h3>
   <p>iOS 与 Android 都内置了色彩滤镜功能，可按红盲、绿盲、蓝黄盲分别调整。它作用于整个屏幕而非单个应用，因此在任意界面中都持续有效。iOS 中称为「色彩滤镜」，Android 中称为「色彩校正」，均位于「辅助功能 → 视觉」中。</p>
+
+  <figure class="shot shot-row">
+      <img src="assets/apple_icon.svg" alt="" loading="lazy" decoding="async">
+      <img src="assets/android_icon.svg" alt="" loading="lazy" decoding="async">
+    <figcaption>iOS 与 Android 均在「辅助功能 → 视觉」中内置色彩滤镜。</figcaption>
+  </figure>
 
   <h3>8.3 偏蓝的通行灯（日本，自 1973 年）</h3>
   <p>1973 年，日本在法规上将通行灯定义为「青」（蓝），并将实际色彩向蓝绿端调整，使红绿色觉异常者更容易将通行灯与红灯区分开。许多路口还额外加入了倒计时与声音提示。</p>
 
+  <figure class="shot">
+      <img src="assets/japan_traffic_light.png" alt="" loading="lazy" decoding="async">
+    <figcaption>日本的通行灯偏向蓝绿端。</figcaption>
+  </figure>
+
+  <figure class="shot">
+      <img src="assets/japan_pedestrian.png" alt="" loading="lazy" decoding="async">
+    <figcaption>行人信号另外加入了发光人形与数字倒计时。</figcaption>
+  </figure>
+
   <h3>8.4 数据可视化配色（Cividis 与 ColorBrewer）</h3>
   <p>ColorBrewer 与 Cividis 在设计配色方案时，同时考虑色觉模拟结果与明暗变化。Cividis 的设计重点在于让明暗顺序在常见色觉障碍条件下仍然可读，因此这类色带不仅普通视觉能读，红绿与蓝黄色觉障碍用户也能读。</p>
+
+  <figure class="shot">
+      <img src="assets/cividis.png" alt="" loading="lazy" decoding="async">
+    <figcaption>Cividis 色带：明暗顺序在常见色觉障碍下仍然可读。</figcaption>
+  </figure>
 
   <h3>8.5 标准与法规（WCAG 与 Section 508）</h3>
   <p>WCAG 2.2 的成功准则 1.4.1 与美国 Section 508 都有明确规定：不能仅依靠颜色来传达信息、指示操作、提示反应或区分视觉元素。这条规则已经写入美国法律、欧盟 EN 301 549 标准，以及多个国家的政策文件。</p>
 
+  <figure class="shot">
+      <img src="assets/wcag_aa.png" alt="" loading="lazy" decoding="async">
+    <figcaption>WCAG AA 合规标识。</figcaption>
+  </figure>
+
   <h3>8.6 线路图案与编号（伦敦地铁）</h3>
   <p>在收到色觉异常乘客的反馈后，伦敦交通局在线路图中加入了重复纹理与更大的线路编号。即使颜色被混淆或被滤除，线路仍然可以识别。</p>
+
+  <figure class="shot">
+      <img src="assets/tube_map.png" alt="" loading="lazy" decoding="async">
+    <figcaption>伦敦地铁图：线路带有重复纹理与编号，颜色之外仍有线索。</figcaption>
+  </figure>
 
   <h3>8.7 药品包装的形状与字母代码（医疗）</h3>
   <p>美国与欧盟的监管机构鼓励药企在颜色之外，使用形状、压纹和字母代码帮助患者区分药物。颜色可以作为辅助线索，但不应成为唯一线索——在用药场景中，这一点的后果尤其直接。</p>
 
   <h3>8.8 关于矫正镜片的诚实说明</h3>
   <p>EnChroma 一类眼镜能够增强部分人群的红绿对比，但厂商也明确说明它不是治愈方案，也不是人人有效。2020 年的一项研究发现，镜片对红盲者的部分测试有帮助，但也可能让绿盲者出现新的判断偏差。与其等待用户自行购买设备，不如先把界面做好。</p>
+
+  <figure class="shot">
+      <img src="assets/enchroma_with.jpg" alt="" loading="lazy" decoding="async">
+    <figcaption>EnChroma 一类镜片：能增强部分人群的红绿对比，但并非治愈方案。</figcaption>
+  </figure>
 
   <div class="figure">
     <p class="cap">三个前后对比案例</p>

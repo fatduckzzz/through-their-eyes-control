@@ -317,7 +317,9 @@
       full = Math.floor(full / 32);
     }
 
-    var armTag = ARM === 'narrative' ? 'N' : (ARM === 'control' ? 'C' : 'X');
+    /* 组别标签保持 N / C（问卷的格式校验正则依赖它），但 data-arm 的取值
+     已改成无语义的 'n' / 'c'：被试查看网页源码时看不出自己在哪一组。 */
+    var armTag = ARM === 'n' ? 'N' : (ARM === 'c' ? 'C' : 'X');
     return CONFIG.CODE_PREFIX + '-' + armTag + '-' + body;
   }
 

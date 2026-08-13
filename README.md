@@ -1,6 +1,6 @@
 # 色觉障碍科普材料
 
-### ▶ [**打开网站 · fatduckzzz.github.io/colour-vision-guide**](https://fatduckzzz.github.io/colour-vision-guide/)
+### ▶ [**打开网站 · fatduckzzz.github.io/through-their-eyes-guide**](https://fatduckzzz.github.io/through-their-eyes-guide/)
 
 一份关于色觉障碍的图文说明，分 16 屏阅读：常见类型、日常生活中的典型困难、
 设计上的改法、系统级色彩滤镜、配色原则。

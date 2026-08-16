@@ -72,6 +72,9 @@
        闸门在这里只起一个作用：挡住点开就跳过的人。 */
     MIN_ACTIVE_SECONDS: 300,
 
+    /* 剩余时间进入这个区间才显示具体秒数，之前只显示一句「请继续阅读」 */
+    LAST_CALL_SECONDS: 30,
+
     // 连续无操作超过这个秒数即暂停计时（防止挂机刷时长）
     IDLE_TIMEOUT_SECONDS: 60,
 
@@ -423,6 +426,7 @@
       issuedNote: '请复制上方完成码，返回问卷填写。有效阅读时长：',
       min: ' 分 ', sec: ' 秒。',
       ready: '已达到最短阅读时长，可以获取完成码。',
+      waiting: '请继续阅读。读完全部内容后，本处会出现获取完成码的按钮。',
       remainA: '还需要阅读约 ', remainB: '。（离开页面或长时间无操作时不计入）',
       minShort: ' 分 ', secShort: ' 秒'
     },
@@ -432,6 +436,7 @@
       issuedNote: 'Copy the code above and paste it back into the questionnaire. Active reading time: ',
       min: ' min ', sec: ' sec.',
       ready: 'Minimum reading time reached — you can get your completion code.',
+      waiting: 'Keep reading. Once you have been through the material, the button to get your code will appear here.',
       remainA: 'About ', remainB: ' of reading left. (Time away from the page, or long pauses, does not count.)',
       minShort: ' min ', secShort: ' sec'
     }
@@ -457,9 +462,23 @@
     } else {
       btn.disabled = true;
       if (status) {
-        var m = Math.floor(left / 60), s = left % 60;
-        status.textContent = T('remainA') +
-          (m > 0 ? m + T('minShort') : '') + pad(s, 2) + T('secShort') + T('remainB');
+        /* 计时照跑，但不给被试一块表。
+
+           原来这里显示精确倒计时（「还需要阅读约 4 分 12 秒」），等于把
+           下限变成了目标：试点里四个实验组被试全部停在 300 秒整，一秒不多；
+           对照组同样的闸门，却读出了 5.0 / 5.0 / 5.0 / 8.25 / 9.0 分。
+           阅读时长是依从性指标之一，而一块看得见的表会把它的方差抹平——
+           所有人落在同一个数上，就再也分不出谁真读了、谁在等。
+
+           最后 30 秒才给出具体秒数：到这一步已经没什么可等的，给个明确的
+           终点反而避免被试以为页面卡住了。 */
+        if (left <= CONFIG.LAST_CALL_SECONDS) {
+          var m = Math.floor(left / 60), s = left % 60;
+          status.textContent = T('remainA') +
+            (m > 0 ? m + T('minShort') : '') + pad(s, 2) + T('secShort') + T('remainB');
+        } else {
+          status.textContent = T('waiting');
+        }
       }
     }
   }

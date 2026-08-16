@@ -24,12 +24,13 @@ if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'   # 无 I L O U
-CODE_RE = re.compile(r'([NCX])-([0-9A-Z]{7})\s*$')
+CODE_RE = re.compile(r'([NCX])-([0-9A-Z]{9})\s*$')
 CVD_TYPES = ['none', 'protan', 'deutan', 'tritan', 'achro', '?', '?', 'unknown']
 ARMS = {'N': 'narrative', 'C': 'control', 'X': 'unknown'}
 
 FIELDS = ['code', 'valid', 'arm', 'active_seconds', 'active_minutes', 'wall_minutes',
-          'idle_minutes', 'sections_seen', 'max_scroll_pct', 'cvd_type', 'reduced_motion']
+          'idle_minutes', 'sections_seen', 'max_scroll_pct', 'cvd_type', 'reduced_motion',
+          'scenes_correct', 'scenes_answered', 'pid_fingerprint']
 
 
 def decode(code):
@@ -48,11 +49,19 @@ def decode(code):
 
     check, v = full % 32, full // 32
     checksum = 0
-    for i in range(0, 30, 5):
+    for i in range(0, 40, 5):
         checksum ^= (v >> i) & 31
 
-    active_sec = ((v >> 22) & 255) * 15
-    wall_min = (v >> 16) & 63
+    # 从低位往高位剥，与编码顺序相反
+    pid_fp   = v & 31;        v >>= 5
+    guesses  = v & 15;        v >>= 4
+    correct  = v & 15;        v >>= 4
+    reduced  = v & 1;         v >>= 1
+    cvd      = v & 7;         v >>= 3
+    scroll   = v & 15;        v >>= 4
+    sections = v & 31;        v >>= 5
+    wall_min = v & 63;        v >>= 6
+    active_sec = (v & 255) * 15
 
     return {
         'code': code,
@@ -63,10 +72,13 @@ def decode(code):
         'wall_minutes': wall_min,
         # 挂钟 − 有效 = 离开页面或发呆的时间
         'idle_minutes': max(0.0, round(wall_min - active_sec / 60, 2)),
-        'sections_seen': (v >> 11) & 31,
-        'max_scroll_pct': round(((v >> 7) & 15) / 15 * 100),
-        'cvd_type': CVD_TYPES[(v >> 4) & 7],
-        'reduced_motion': bool((v >> 3) & 1),
+        'sections_seen': sections,
+        'max_scroll_pct': round(scroll / 15 * 100),
+        'cvd_type': CVD_TYPES[cvd],
+        'reduced_motion': bool(reduced),
+        'scenes_correct': correct,
+        'scenes_answered': guesses,
+        'pid_fingerprint': pid_fp,
     }
 
 

@@ -126,6 +126,8 @@
      因此两组走的是同一套编码逻辑，只是对照组的这些位恒为 0。 */
   var reported = {
     cvdType: null,        // null → 编码为 7（未知/不适用）
+    correct: 0,           // 场景答对数（对照组无场景，恒为 0）
+    guesses: 0,           // 场景作答数
     ctoolOpened: false,
     ctoolExported: false,
     imgAnalysed: false
@@ -139,6 +141,11 @@
       reported.cvdType = (typeof value === 'string')
         ? (CVD_TYPES.hasOwnProperty(value) ? CVD_TYPES[value] : null)
         : (typeof value === 'number' ? value : null);
+    } else if (key === 'correct' || key === 'guesses') {
+      /* 计数字段要按数值存。这里原本对 cvdType 之外的一切都做 !!value，
+         场景答对数 9 会被压成 true，进码时又变回 1——刚加进来的计数
+         等于白记。 */
+      reported[key] = Math.max(0, value | 0);
     } else {
       reported[key] = !!value;
     }
@@ -293,26 +300,52 @@
     var scroll15 = Math.min(15, Math.round(maxScrollPct / 100 * 15));
     var type     = (reported.cvdType === null) ? 7 : (reported.cvdType & 7);
 
-    /* 30 位载荷（高位在前）：
-         29..22  有效时长 / 15 秒     8 位
-         21..16  挂钟分钟             6 位
-         15..11  看过的分节数         5 位
-         10..7   滚动深度（0–15 档）  4 位
-          6..4   CVD 类型             3 位
-             3   系统开了减少动效     1 位
-          2..0   预留                 3 位
-       最大值 2^30-1，仍在 JS 32 位按位运算的安全范围内。 */
-    var v = (activeQ << 22) | (wallMin << 16) | (sections << 11) |
-            (scroll15 << 7) | (type << 4) | ((reducedMotion ? 1 : 0) << 3);
+    /* 场景答题表现。对照组没有场景，两个值恒为 0。
 
-    var check = 0, i;
-    for (i = 0; i < 30; i += 5) check ^= (v >>> i) & 31;
+       这是「有没有真的在体验」最直接的行为证据，比阅读时长强：
+       时长只说明页面开着，答对了几道题说明人在读、在判断。页面结尾
+       本来就把这两个数显示给被试看，却一直没记进码里。 */
+    var correct = Math.min(15, reported.correct | 0);
+    var guesses = Math.min(15, reported.guesses | 0);
 
-    /* 30+5=35 位超过 32 位按位运算的范围，改用乘除。
-       JS 的数字是双精度浮点，2^53 以内整数运算是精确的。 */
+    /* pid 指纹。
+
+       没有它，码就几乎没有熵：任何一个老实读完、闸门一开就点按钮的人，
+       拿到的都是同一串。试点里三个人交了一模一样的码——而且作弊与不作弊
+       产生的数据完全一样，事后分不出来。加上 pid 的 5 位指纹之后，每份
+       答卷的码各不相同，转发别人的码会与答卷上的 pid 对不上。
+
+       只存 5 位指纹而不是 pid 本身：够用来校验，又不足以从码反推出 pid。 */
+    var pidHash = fingerprint(PID);
+
+    /* 40 位载荷（高位在前）：
+         39..32  有效时长 / 15 秒     8 位
+         31..26  挂钟分钟             6 位
+         25..21  看过的分节数         5 位
+         20..17  滚动深度（0–15 档）  4 位
+         16..14  CVD 类型             3 位
+            13   系统开了减少动效     1 位
+         12..9   场景答对数           4 位
+          8..5   场景作答数           4 位
+          4..0   pid 指纹             5 位
+       40 位已超出 JS 按位运算的 32 位范围，因此全程用乘法拼装；
+       双精度浮点在 2^53 以内的整数运算是精确的，40+5 位仍安全。 */
+    var v = activeQ;
+    v = v * 64 + wallMin;
+    v = v * 32 + sections;
+    v = v * 16 + scroll15;
+    v = v * 8  + type;
+    v = v * 2  + (reducedMotion ? 1 : 0);
+    v = v * 16 + correct;
+    v = v * 16 + guesses;
+    v = v * 32 + pidHash;
+
+    var check = 0, i, t = v;
+    for (i = 0; i < 8; i++) { check ^= t % 32; t = Math.floor(t / 32); }
+
     var full = v * 32 + check;
     var body = '';
-    for (i = 0; i < 7; i++) {
+    for (i = 0; i < 9; i++) {
       body = ALPHABET[full % 32] + body;
       full = Math.floor(full / 32);
     }
@@ -325,21 +358,29 @@
 
   /* 自解码，方便在控制台核对生成结果与 tools/decode_codes.py 是否一致 */
   function readCode(code) {
-    var m = /([NCX])-([0-9A-Z]{7})\s*$/.exec(String(code).toUpperCase().replace(/\s/g, ''));
+    var m = /([NCX])-([0-9A-Z]{9})\s*$/.exec(String(code).toUpperCase().replace(/\s/g, ''));
     if (!m) return null;
 
     var full = 0, i;
-    for (i = 0; i < 7; i++) {
+    for (i = 0; i < 9; i++) {
       var idx = ALPHABET.indexOf(m[2].charAt(i));
       if (idx < 0) return null;
       full = full * 32 + idx;
     }
 
-    var check = full % 32, v = Math.floor(full / 32), sum = 0;
-    for (i = 0; i < 30; i += 5) sum ^= (v >>> i) & 31;
+    var check = full % 32, v = Math.floor(full / 32), sum = 0, t = v;
+    for (i = 0; i < 8; i++) { sum ^= t % 32; t = Math.floor(t / 32); }
 
-    var activeSec = ((v >>> 22) & 255) * 15;
-    var wallMin = (v >>> 16) & 63;
+    /* 从低位往高位剥，与编码顺序相反 */
+    var pidHash = v % 32;        v = Math.floor(v / 32);
+    var guesses = v % 16;        v = Math.floor(v / 16);
+    var correct = v % 16;        v = Math.floor(v / 16);
+    var rm      = v % 2;         v = Math.floor(v / 2);
+    var type    = v % 8;         v = Math.floor(v / 8);
+    var scroll  = v % 16;        v = Math.floor(v / 16);
+    var secs    = v % 32;        v = Math.floor(v / 32);
+    var wallMin = v % 64;        v = Math.floor(v / 64);
+    var activeSec = (v % 256) * 15;
 
     return {
       valid: sum === check,
@@ -348,11 +389,26 @@
       activeMinutes: +(activeSec / 60).toFixed(2),
       wallMinutes: wallMin,
       idleMinutes: Math.max(0, +(wallMin - activeSec / 60).toFixed(2)),
-      sectionsSeen: (v >>> 11) & 31,
-      maxScrollPct: Math.round(((v >>> 7) & 15) / 15 * 100),
-      cvdType: ['none', 'protan', 'deutan', 'tritan', 'achro', '?', '?', 'unknown'][(v >>> 4) & 7],
-      reducedMotion: !!((v >>> 3) & 1)
+      sectionsSeen: secs,
+      maxScrollPct: Math.round(scroll / 15 * 100),
+      cvdType: ['none', 'protan', 'deutan', 'tritan', 'achro', '?', '?', 'unknown'][type],
+      reducedMotion: !!rm,
+      scenesCorrect: correct,
+      scenesAnswered: guesses,
+      pidFingerprint: pidHash
     };
+  }
+
+  /* pid 的 5 位指纹。FNV-1a 的一个小变体，取模 32。
+     用途只是「这串码是不是这份答卷的」，不是密码学用途。 */
+  function fingerprint(s) {
+    var h = 2166136261, i;
+    s = String(s || '');
+    for (i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h % 32;
   }
 
   /* ---------- 文案 ----------

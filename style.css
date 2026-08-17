@@ -77,6 +77,15 @@ header.masthead .meta{
   line-height:1.8;
 }
 
+/* 阅读说明。与实验站的 .hero-note 对应：同样比正文小一号、同样低对比，
+   但要比 .meta 显眼一点——它是指示语，不是出处脚注。 */
+header.masthead .readnote{
+  margin-top:1rem;
+  font-size:.9rem;
+  color:var(--ink-soft);
+  line-height:1.7;
+}
+
 main{padding-bottom:4rem}
 
 section{
